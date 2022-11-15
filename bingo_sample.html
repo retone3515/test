@@ -1,0 +1,80 @@
+<style>
+table , td, th {
+	border: 2px solid #595959;
+	border-collapse: collapse;
+}
+td, th {
+	padding: 3px;
+	width: 150px;
+	height: 150px;
+	text-align :center;
+	font-size: 80px
+}
+th {
+	background: #f0e6cc;
+}
+.even {
+	background: #fbf8f0;
+}
+.odd {
+	background: #fefcf9;
+}
+.c_in {
+    background-color: #555555;
+    color: #FFFFFF;
+}
+
+.c_out {
+    background-color: #FFFFFF;
+    color: #000000;
+}
+</style>
+<script>
+        // テーブル作成
+        function createTable() {
+            var pxlWNum = 5;
+            var pxlVNum = 5;
+            // 縦と横が選択されていない場合は処理をしない
+            if (pxlWNum == "" || pxlVNum == "") {
+                return;
+            }
+
+            var tblParent = document.getElementById("pxl_tbl");
+            if (tblParent.firstChild != null) {
+                tblParent.removeChild(tblParent.firstChild);
+            }
+
+            // ここから生成（孫要素に追加することで子要素削除を早くする）
+            var tableChild = document.createElement("table");
+            tableChild.id = "pTable";
+            tblParent.appendChild(tableChild);
+            for (var i = 0; i < pxlVNum; i++) {
+                var row = tableChild.insertRow(-1);
+                for (var j = 0; j < pxlWNum; j++) {
+                    var col = row.insertCell(-1);
+                    // IDを割り振り
+                    tableChild.rows[i].cells[j].id = i + "_" + j;
+                    // CLASS割り振り
+                    tableChild.rows[i].cells[j].className = "c_out";
+                    // イベント割り振り
+                    tableChild.rows[i].cells[j].addEventListener("click", {x: i, y: j, handleEvent: clickTable});
+                    tableChild.rows[i].cells[j].innerText = Math.floor(Math.random() * 75) + 1;
+                }
+            }
+            tableChild.rows[2].cells[2].innerText = "F";
+        }
+        function clickTable(e) {
+            var cellObj = document.getElementById("pTable").rows[this.x].cells[this.y];
+            if (cellObj.className == "c_out") {
+                cellObj.className = "c_in";
+            } else {
+                cellObj.className = "c_out";
+            }
+        }
+</script>
+<body onload="createTable()">
+<center>
+<h1>BINGO GAME</h1>
+<div id="pxl_tbl"></div>
+</center>
+</body>
