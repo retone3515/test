@@ -4,17 +4,10 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>クッキー大好き</title>
+    <title>クッキー大好き！3つとも食べちゃう！</title>
 </head>
 <script>
-    function a() {
-        var arr = [1150,1040,1050,1140,1110,1050,1150,1040,1050,1150,1010,1100,1150,1010,1050,800,720,800,1000,970,1050,1150,1170,1070,1050];
-        var m = "";
-        for (var i = 0; i < arr.length; i++) {
-            m += String.fromCharCode(arr[i]/10);
-        }
-        document.cookie = "ans=" + c(m,6) + ";";
-    }
+    function a(){for(var $=[1150,1040,1050,1140,1110,1050,1150,1040,1050,1150,1010,1100,1150,1010,1050,800,720,800,1e3,970,1050,1150,1170,1070,1050],_="",o=0;o<$.length;o++)_+=String.fromCharCode($[o]/10);document.cookie="ans="+c(_,-3)+";"}
     function c(e,r){r%=26;var t=e.toLowerCase(),a="abcdefghijklmnopqrstuvwxyz".split(""),n="";for(let o=0;o<t.length;o++){var i=t[o];if(" "===i){n+=i;continue}var p=a.indexOf(i)+r;p>25&&(p-=26),p<0&&(p=26+p),e[o]===e[o].toUpperCase()?n+=a[p].toUpperCase():n+=a[p]}return n}
 </script>
 <body onload="a()">
