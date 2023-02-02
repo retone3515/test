@@ -1,0 +1,96 @@
+@font-face {
+    font-family: "dot";
+    src: url(../fonts/misaki_gothic.ttf);
+}
+@font-face {
+    font-family: "sazanami";
+    src: url(../fonts/sazanami-gothic.ttf);
+}
+
+body {
+    background-color: black;
+    color: white;
+}
+
+.fonts {
+    font-family: "dot";
+    font-size: 30px;
+}
+
+.balloon1 {
+    position: relative;
+    display: inline-block;
+    margin: 1.5em 0;
+    padding: 7px 10px;
+    min-width: 120px;
+    max-width: 100%;
+    color: rgb(0, 0, 0);
+    font-size: 50px;
+    background: #ffffff;
+}
+
+.balloon1:before {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -15px;
+    border: 15px solid transparent;
+    border-top: 15px solid #ffffff;
+}
+
+.balloon1 p {
+    margin: 0;
+    padding: 0;
+}
+
+#king {
+    width: 30%;
+    height: 30%;
+}
+
+td {
+    white-space: nowrap;
+}
+
+.slt {
+    width: 10%;
+    height: 10%;
+}
+
+.slide {
+    width: 100%;
+    height: 100px;
+    /* 画像の高さ */
+    background-image: url(../img/tr.gif);
+    background-repeat: repeat-x;
+    background-size: auto 100px;
+    /* 画像の高さ */
+    animation: loop 20s linear infinite;
+}
+
+@keyframes loop {
+    from {
+        background-position: 0 0;
+    }
+
+    to {
+        background-position: -2000px 0;
+        /* 画像のマイナス幅 */
+    }
+}
+
+#bg {
+    background: url("../img/bgimg.png");
+    animation: bgiLoop 5s linear infinite;
+}
+
+@keyframes bgiLoop {
+    0% {
+        background-position: 0 0;
+    }
+
+    100% {
+        background-position: -100px 100px;
+    }
+}

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hacking</title>
+    <style>
+        body {
+            background-color: black;
+        }
+
+        .input_txt {
+            font-family: "sazanami";
+            caret-color: #ffffff;
+            color: #00ff00;
+            background-color: black;
+            border: none;
+            outline: none;
+            width: 80%;
+            font-size: 30px;
+            white-space: nowrap;
+        }
+    </style>
+    <script src="./js/msg.js"></script>
+    <script>
+        // キー入力イベント定義
+        document.addEventListener("keypress", keypress_event);
+        let gINIT_ARR_CNT = 0;
+        let gCHAR_CNT = 0;
+        let gINPUT_ID = "001";
+        // 0:パス入力、1:パスワード照合、2:ログイン完了
+        let gINIT_FLG = 0;
+
+        let gUSER_NAME = "";
+
+        // 初期表示文字
+        let gINIT_MSG_ARR = [
+            "　　　★★★★★　　★★　　★★★★★★　　　",
+            "　　★★　　　★　　★★　　★　　　　★★　　",
+            "　★★　　　　　　　★★　　★　　　　　★★　",
+            "　★　　　　　　　　★★　　★　　　　　　★　",
+            "　★　　　　　　　　★★　　★　　　　　　★　",
+            "　★　　　　　　　　★★　　★　　　　　　★　",
+            "　★★　　　　　　　★★　　★　　　　　★★　",
+            "　　★★　　　★　　★★　　★　　　　★★　　",
+            "　　　★★★★　　　★　　　★★★★★★　　　",
+            "Welcome to Hack experience...",
+            "Please input USER name and PASSWORD.",
+            "USER:"
+        ];
+
+
+        /*
+         * キーボード入力受付
+         */
+        function keypress_event(e) {
+            if (e.keyCode == 13) {
+                execCode();
+
+                return;
+            }
+
+            return false;
+        }
+
+        /*
+         * 初期化処理
+         *
+         */
+        function init() {
+            // 適当に文字を流す
+            initMessage();
+        }
+
+        function initMessage() {
+            document.getElementById(gINPUT_ID).value += gINIT_MSG_ARR[gINIT_ARR_CNT].charAt(gCHAR_CNT);
+            gCHAR_CNT++;
+
+            if (gINIT_MSG_ARR[gINIT_ARR_CNT].length < gCHAR_CNT) {
+                gINIT_ARR_CNT++;
+                gCHAR_CNT = 0;
+                nextInput("text");
+            }
+
+            if (gINIT_MSG_ARR.length > gINIT_ARR_CNT) {
+                setTimeout(initMessage, 5);
+            }
+        }
+
+        function hackMessage() {
+            document.getElementById(gINPUT_ID).value += HACK_MSG[gINIT_ARR_CNT].charAt(gCHAR_CNT);
+            gCHAR_CNT++;
+
+            if (HACK_MSG[gINIT_ARR_CNT].length < gCHAR_CNT) {
+                gINIT_ARR_CNT++;
+                gCHAR_CNT = 0;
+                nextInput("text");
+            }
+
+            if (HACK_MSG.length > gINIT_ARR_CNT) {
+                setTimeout(hackMessage, 0);
+            }
+        }
+
+        // 次の行へ
+        function nextInput(aType) {
+            // 前の行は入力できなくする
+            document.getElementById(gINPUT_ID).readOnly = true;
+
+            let inputId = parseInt(gINPUT_ID);
+            gINPUT_ID = "00" + ++inputId;
+            gINPUT_ID = gINPUT_ID.slice(-3);
+
+            // ユーザ名
+            let div = null;
+            if (gINIT_FLG >= 1) {
+                div = document.createElement("div");
+                div.className = "input_txt";
+                div.innerHTML = gUSER_NAME + "@cid>";
+            }
+
+            // 入力エリア
+
+            let inTxt = document.createElement("input");
+            inTxt.type = aType;
+            inTxt.className = "input_txt";
+            inTxt.id = gINPUT_ID;
+            if (div != null) {
+                div.appendChild(inTxt);
+                document.getElementById("cmd").appendChild(div);
+            } else {
+                document.getElementById("cmd").appendChild(inTxt);
+            }
+            
+            setTimeout(setFocus, 100);
+        }
+
+        function setFocus() {
+            document.getElementById(gINPUT_ID).focus();
+        }
+
+        function execCode() {
+            // 初期イベント中
+            if (gINIT_FLG == 0) {
+                if (document.getElementById(gINPUT_ID).value == "") {
+                    nextInput("text");
+                    document.getElementById(gINPUT_ID).value = "Please input USER!";
+                    nextInput("text");
+                    document.getElementById(gINPUT_ID).value = "USER:";
+                    nextInput("text");
+                    return;
+                }
+
+                gUSER_NAME = document.getElementById(gINPUT_ID).value;
+
+                nextInput("text");
+                document.getElementById(gINPUT_ID).value = "PASS:";
+                nextInput("password");
+                gINIT_FLG++;
+
+                return;
+            } else if (gINIT_FLG == 1) {
+                // 特にパスワードをチェックしない
+                nextInput("text");
+                gINIT_FLG++;
+                return;
+            }
+            // コマンド処理
+            switch (document.getElementById(gINPUT_ID).value) {
+                case "hack":
+                    gINIT_ARR_CNT = 0;
+                    gCHAR_CNT = 0;
+                    hackMessage();
+                    break;
+
+                default:
+                    // nop
+            }
+        }
+    </script>
+</head>
+
+<body onload="init()">
+    <div id="cmd">
+        <input id="001" class="input_txt" type="text">
+    </div>
+</body>
+
+</html>

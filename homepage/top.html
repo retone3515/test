@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ようこそ</title>
+    <link rel="stylesheet" href="./css/style.css">
+    <script>
+        let gMsgArr = [
+            "まじ？",
+            "本当につづきから？",
+            "うそでしょ？"
+        ];
+        let gMsgCnt = 0;
+
+        document.addEventListener("keydown", keydown_event);
+
+        function keydown_event(e) {
+            if (e.code == "KeyW" || e.code == "ArrowUp") {
+                selectImage();
+            } else if (e.code == "KeyS" || e.code == "ArrowDown") {
+                selectImage();
+            } else if (e.keyCode == 13) {
+                execMenu();
+            }
+            return false;
+        }
+
+        function selectImage() {
+            let stImg = document.getElementById("st");
+            let edImg = document.getElementById("ed");
+            if (stImg.style.visibility == "hidden") {
+                stImg.style.visibility = "visible";
+                edImg.style.visibility = "hidden";
+            } else {
+                stImg.style.visibility = "hidden";
+                edImg.style.visibility = "visible";
+            }
+        }
+
+        function execMenu() {
+            let stImg = document.getElementById("st");
+            // はじめから
+            if (stImg.style.visibility == "visible") {
+                location.href = "next.html";
+            // つづきから
+            } else {
+                if (gMsgArr.length <= gMsgCnt) {
+                    location.href = "next.html";
+                }
+                document.getElementById("msg").innerText = gMsgArr[gMsgCnt];
+            }
+            gMsgCnt++;
+        }
+    </script>
+</head>
+
+<body style="background-color: black;">
+    <table align="center">
+        <tbody>
+            <tr align="center">
+                <td>
+                    <div id="msg" class="fonts balloon1">待っていたぞ！勇者よ！</div>
+                </td>
+            </tr>
+            <tr align="center">
+                <td><img id="king" src="./img/king.gif"></td>
+            </tr>
+            <tr align="center">
+                <td>
+                    <div class="fonts"><img id="st" class="slt" src="./img/select.png">はじめから</div>
+                </td>
+            </tr>
+            <tr align="center">
+                <td>
+                    <div class="fonts"><img id="ed" class="slt" style="visibility: hidden;" src="./img/select.png">つづきから</div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="slide">a</div>
+</body>
+
+</html>
