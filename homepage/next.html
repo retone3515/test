@@ -19,6 +19,87 @@
             display: inline;
         }
     </style>
+    <script>
+        document.addEventListener("keydown", keydown_event);
+
+        let gMENU_ARR = ["item", "skill", "sobi", "status", "go"];
+
+        function keydown_event(e) {
+            if (e.code == "KeyW" || e.code == "ArrowUp") {
+                selectImage("up");
+            } else if (e.code == "KeyS" || e.code == "ArrowDown") {
+                selectImage("down");
+            } else if (e.keyCode == 13) {
+                nextPage();
+            }
+            return false;
+        }
+        function selectImage(aPush) {
+            let num = 0;
+            if (aPush == "up") {
+                num--;
+            } else {
+                num++;
+            }
+
+            let next = getSelectNum() + num;
+
+            if (next == -1) {
+                next = Object.keys(gMENU_ARR).length-1;
+            } else if (next == Object.keys(gMENU_ARR).length) {
+                next = 0;
+            }
+
+            setImage(next);
+        }
+
+        function getSelectNum() {
+            let item = document.getElementById("item");
+            let skill = document.getElementById("skill");
+            let sobi = document.getElementById("sobi");
+            let status = document.getElementById("status");
+            let go = document.getElementById("go");
+            let result = 0;
+            if (item.style.visibility == "visible") {
+                result = 0;
+            } else if (skill.style.visibility == "visible") {
+                result = 1;
+            } else if (sobi.style.visibility == "visible") {
+                result = 2;
+            } else if (status.style.visibility == "visible") {
+                result = 3;
+            } else if (go.style.visibility == "visible") {
+                result = 4;
+            }
+
+            return result;
+        }
+
+        function setImage(aNum) {
+            for (let i = 0; i < gMENU_ARR.length; i++) {
+                if (i == aNum) {
+                    document.getElementById(gMENU_ARR[i]).style.visibility = "visible";
+                } else {
+                    document.getElementById(gMENU_ARR[i]).style.visibility = "hidden";
+                }
+            }
+        }
+
+        function nextPage() {
+            let num = getSelectNum();
+            switch (num) {
+                case 0:
+                case 1:
+                case 2:
+                case 3:
+                    location.href = "not_found.html";
+                    break;
+                case 4:
+                    location.href = "dummy.html";
+                    break;
+            }
+        }
+    </script>
 </head>
 
 <body id="bg">
@@ -26,13 +107,7 @@
         <tbody>
             <tr>
                 <td style="width: 20%;">
-                    <div class="fonts"><img id="st" class="slt" src="./img/select.png">アイテム　</div>
-                </td>
-                <td style="width: 10%;" align="center">
-                    <img src="./img/yu.png">
-                </td>
-                <td style="width: 10%;" align="center">
-                    <img src="./img/yu_c.gif">
+                    <div class="fonts"><img id="item" class="slt" style="visibility: visible;" src="./img/select.png">アイテム　</div>
                 </td>
                 <td style="width: 0%;">
                     <table style="border: none;">
@@ -56,17 +131,17 @@
                         </tbody>
                     </table>
                 </td>
+                <td style="width: 10%;" align="center">
+                    <img src="./img/yu.png">
+                </td>
+                <td style="width: 10%;" align="center">
+                    <img src="./img/yu_c.gif">
+                </td>
             </tr>
             <tr>
                 <td>
-                    <div class="fonts"><img id="ed" class="slt" style="visibility: hidden;" src="./img/select.png">スキル　　
+                    <div class="fonts"><img id="skill" class="slt" style="visibility: hidden;" src="./img/select.png">スキル　　
                     </div>
-                </td>
-                <td style="width: 10%;" align="center">
-                    <img src="./img/hi.png">
-                </td>
-                <td style="width: 10%;" align="center">
-                    <img src="./img/hi_c.gif">
                 </td>
                 <td style="width: 0%;">
                     <table style="border: none;">
@@ -84,23 +159,23 @@
                             </tr>
                             <tr>
                                 <td style="border: none;">
-                                    <div class="fonts">NEXT：12/23432</div>
+                                    <div class="fonts">NEXT：3454/14932</div>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </td>
+                <td style="width: 10%;" align="center">
+                    <img src="./img/hi.png">
+                </td>
+                <td style="width: 10%;" align="center">
+                    <img src="./img/hi_c.gif">
+                </td>
             </tr>
             <tr>
                 <td>
-                    <div class="fonts"><img id="ed" class="slt" style="visibility: hidden;" src="./img/select.png">そうび
+                    <div class="fonts"><img id="sobi" class="slt" style="visibility: hidden;" src="./img/select.png">そうび
                     </div>
-                </td>
-                <td style="width: 10%;" align="center">
-                    <img src="./img/os.png">
-                </td>
-                <td style="width: 10%;" align="center">
-                    <img src="./img/os_c.gif">
                 </td>
                 <td style="width: 0%;">
                     <table style="border: none;">
@@ -118,23 +193,23 @@
                             </tr>
                             <tr>
                                 <td style="border: none;">
-                                    <div class="fonts">NEXT：12/23432</div>
+                                    <div class="fonts">NEXT：33921/40302</div>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </td>
+                <td style="width: 10%;" align="center">
+                    <img src="./img/os.png">
+                </td>
+                <td style="width: 10%;" align="center">
+                    <img src="./img/os_c.gif">
+                </td>
             </tr>
             <tr>
                 <td>
-                    <div class="fonts"><img id="ed" class="slt" style="visibility: hidden;" src="./img/select.png">ステータス
+                    <div class="fonts"><img id="status" class="slt" style="visibility: hidden;" src="./img/select.png">ステータス
                     </div>
-                </td>
-                <td style="width: 10%;" align="center">
-                    <img src="./img/ma.png">
-                </td>
-                <td style="width: 10%;" align="center">
-                    <img src="./img/ma_c.gif">
                 </td>
                 <td style="width: 0%;">
                     <table style="border: none;">
@@ -152,23 +227,23 @@
                             </tr>
                             <tr>
                                 <td style="border: none;">
-                                    <div class="fonts">NEXT：12/23432</div>
+                                    <div class="fonts">NEXT：9002/9432</div>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </td>
+                <td style="width: 10%;" align="center">
+                    <img src="./img/ma.png">
+                </td>
+                <td style="width: 10%;" align="center">
+                    <img src="./img/ma_c.gif">
+                </td>
             </tr>
             <tr>
                 <td>
-                    <div class="fonts"><img id="ed" class="slt" style="visibility: hidden;" src="./img/select.png">そとにでる
+                    <div class="fonts"><img id="go" class="slt" style="visibility: hidden;" src="./img/select.png">そとにでる
                     </div>
-                </td>
-                <td style="width: 10%;" align="center">
-                    <img src="./img/ne.png">
-                </td>
-                <td style="width: 10%;" align="center">
-                    <img src="./img/ne_c.gif">
                 </td>
                 <td style="width: 0%;">
                     <table style="border: none;">
@@ -186,11 +261,17 @@
                             </tr>
                             <tr>
                                 <td style="border: none;">
-                                    <div class="fonts">NEXT：12/23432</div>
+                                    <div class="fonts">NEXT：130402/3223432</div>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
+                </td>
+                <td style="width: 10%;" align="center">
+                    <img src="./img/ne.png">
+                </td>
+                <td style="width: 10%;" align="center">
+                    <img src="./img/ne_c.gif">
                 </td>
             </tr>
         </tbody>

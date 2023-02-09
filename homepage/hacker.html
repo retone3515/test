@@ -7,8 +7,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hacking</title>
     <style>
+        /* スクロールをなめらかにする */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* スクロールバー全体 */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        /* スクロールバー背景 */
+        ::-webkit-scrollbar-track {
+            background: #000000;
+            box-shadow: inset 0 0 2px #777;
+        }
+
+        /* スクロールバーつまみ */
+        ::-webkit-scrollbar-thumb {
+            background: #19fc19;
+        }
+
         body {
             background-color: black;
+            overflow-x: hidden;
+        }
+
+        .div_txt {
+            font-family: "sazanami";
+            caret-color: #ffffff;
+            color: #19fc19;
+            background-color: black;
+            border: none;
+            outline: none;
+            font-size: 30px;
+            white-space: nowrap;
         }
 
         .input_txt {
@@ -18,7 +51,7 @@
             background-color: black;
             border: none;
             outline: none;
-            width: 80%;
+            width: 90%;
             font-size: 30px;
             white-space: nowrap;
         }
@@ -27,8 +60,18 @@
     <script>
         // キー入力イベント定義
         document.addEventListener("keypress", keypress_event);
-        let gINIT_ARR_CNT = 0;
+        // 表示用カウンタ
+        let gARR_CNT = 0;
         let gCHAR_CNT = 0;
+        // 表示用配列
+        let gTARGET_ARR = [];
+
+        // 処理中フラグ
+        let isTransaction = false;
+
+        // コマンドフラグ
+        let isCmd = false;
+
         let gINPUT_ID = "001";
         // 0:パス入力、1:パスワード照合、2:ログイン完了
         let gINIT_FLG = 0;
@@ -71,36 +114,41 @@
          */
         function init() {
             // 適当に文字を流す
-            initMessage();
+            gTARGET_ARR = gINIT_MSG_ARR;
+            showMessage(true);
         }
 
-        function initMessage() {
-            document.getElementById(gINPUT_ID).value += gINIT_MSG_ARR[gINIT_ARR_CNT].charAt(gCHAR_CNT);
-            gCHAR_CNT++;
+        // メッセージ表示（true:文字単位、false:行単位）
+        function showMessage(aFlg) {
+            isTransaction = true;
+            isCmd = true;
+            let time = 5;
+            // 文字単位表示
+            if (aFlg == true) {
+                document.getElementById(gINPUT_ID).value += gTARGET_ARR[gARR_CNT].charAt(gCHAR_CNT);
+                gCHAR_CNT++;
 
-            if (gINIT_MSG_ARR[gINIT_ARR_CNT].length < gCHAR_CNT) {
-                gINIT_ARR_CNT++;
-                gCHAR_CNT = 0;
+                if (gTARGET_ARR[gARR_CNT].length < gCHAR_CNT) {
+                    gARR_CNT++;
+                    gCHAR_CNT = 0;
+                    nextInput("text");
+                }
+
+                // 行単位表示
+            } else {
+                time = 50;
+                document.getElementById(gINPUT_ID).value += gTARGET_ARR[gARR_CNT];
+                gARR_CNT++;
                 nextInput("text");
             }
 
-            if (gINIT_MSG_ARR.length > gINIT_ARR_CNT) {
-                setTimeout(initMessage, 5);
-            }
-        }
-
-        function hackMessage() {
-            document.getElementById(gINPUT_ID).value += HACK_MSG[gINIT_ARR_CNT].charAt(gCHAR_CNT);
-            gCHAR_CNT++;
-
-            if (HACK_MSG[gINIT_ARR_CNT].length < gCHAR_CNT) {
-                gINIT_ARR_CNT++;
+            if (gTARGET_ARR.length > gARR_CNT) {
+                setTimeout(function () { showMessage(aFlg) }, time);
+            } else {
+                gARR_CNT = 0;
                 gCHAR_CNT = 0;
-                nextInput("text");
-            }
-
-            if (HACK_MSG.length > gINIT_ARR_CNT) {
-                setTimeout(hackMessage, 0);
+                isTransaction = false;
+                isCmd = false;
             }
         }
 
@@ -115,25 +163,25 @@
 
             // ユーザ名
             let div = null;
-            if (gINIT_FLG >= 1) {
+            if (gINIT_FLG >= 1 && isCmd == false) {
                 div = document.createElement("div");
-                div.className = "input_txt";
+                div.className = "div_txt";
                 div.innerHTML = gUSER_NAME + "@cid>";
             }
 
             // 入力エリア
-
             let inTxt = document.createElement("input");
             inTxt.type = aType;
             inTxt.className = "input_txt";
             inTxt.id = gINPUT_ID;
+            inTxt.maxlength = 100;
             if (div != null) {
                 div.appendChild(inTxt);
                 document.getElementById("cmd").appendChild(div);
             } else {
                 document.getElementById("cmd").appendChild(inTxt);
             }
-            
+
             setTimeout(setFocus, 100);
         }
 
@@ -142,13 +190,17 @@
         }
 
         function execCode() {
+            if (isTransaction == true) {
+                return;
+            }
+
             // 初期イベント中
             if (gINIT_FLG == 0) {
                 if (document.getElementById(gINPUT_ID).value == "") {
                     nextInput("text");
-                    document.getElementById(gINPUT_ID).value = "Please input USER!";
+                    setMessage("Please input USER!");
                     nextInput("text");
-                    document.getElementById(gINPUT_ID).value = "USER:";
+                    setMessage("USER:");
                     nextInput("text");
                     return;
                 }
@@ -156,7 +208,7 @@
                 gUSER_NAME = document.getElementById(gINPUT_ID).value;
 
                 nextInput("text");
-                document.getElementById(gINPUT_ID).value = "PASS:";
+                setMessage("PASS:");
                 nextInput("password");
                 gINIT_FLG++;
 
@@ -167,17 +219,54 @@
                 gINIT_FLG++;
                 return;
             }
+
+            isCmd = true;
             // コマンド処理
             switch (document.getElementById(gINPUT_ID).value) {
                 case "hack":
-                    gINIT_ARR_CNT = 0;
-                    gCHAR_CNT = 0;
-                    hackMessage();
+                    gTARGET_ARR = HACK_MSG;
+                    showMessage(true);
                     break;
 
+                case "mat":
+                    nextInput("text");
+                    let ramNumArr = [];
+                    for (let i = 0; i < 200; i++) {
+                        let ran = "";
+                        for (let j = 0; j < 100; j++) {
+                            ran += Math.floor(Math.random() * 2);
+                        }
+                        ramNumArr.push(ran);
+                    }
+
+                    gTARGET_ARR = ramNumArr;
+                    showMessage(false);
+                    break;
+
+                case "ls2":
+                    nextInput("text");
+                    gTARGET_ARR = ["dir score/","dir log/","dir time/"];
+                    showMessage(false);
+                    break;
+
+                case "rm score.txt":
+                case "rm *":
+                    break;
+
+
+
                 default:
-                    // nop
+                    if (document.getElementById(gINPUT_ID).value != "") {
+                        nextInput("text");
+                        setMessage("command not found");
+                    }
             }
+            isCmd = false;
+            nextInput("text");
+        }
+
+        function setMessage(aValue) {
+            document.getElementById(gINPUT_ID).value = aValue;
         }
     </script>
 </head>
