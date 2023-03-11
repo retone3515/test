@@ -33,7 +33,7 @@
             overflow-x: hidden;
         }
 
-        .div_txt {
+        .txt_font {
             font-family: "sazanami";
             caret-color: #ffffff;
             color: #19fc19;
@@ -41,25 +41,45 @@
             border: none;
             outline: none;
             font-size: 30px;
-            white-space: nowrap;
         }
 
-        .input_txt {
-            font-family: "sazanami";
-            caret-color: #ffffff;
-            color: #00ff00;
+        #ret_area {
+            width: 100%;
+            height: 93vh;
+            resize: none;
+        }
+
+        #cmd {
+            width: 70vw;
+        }
+
+        footer {
+            position: fixed;
+            bottom: 0;
+            width: 95%;
+            border: 2px solid #19fc19;
+            border-radius: 0.67em;
+            padding: 0.5em;
             background-color: black;
-            border: none;
-            outline: none;
-            width: 90%;
-            font-size: 30px;
-            white-space: nowrap;
+        }
+
+        #timer {
+            width: 100%;
+            position: fixed;
+            font-size: 40pt;
+            top: 30px;
+            right: 0px;
+            background-color: transparent;
+            color: white;
+            visibility: hidden;
+            text-align: right;
+            margin-right: 3%;
         }
     </style>
     <script src="./js/msg.js"></script>
     <script>
         // キー入力イベント定義
-        document.addEventListener("keypress", keypress_event);
+        document.addEventListener("keydown", keydown_event);
         // 表示用カウンタ
         let gARR_CNT = 0;
         let gCHAR_CNT = 0;
@@ -72,78 +92,257 @@
         // コマンドフラグ
         let isCmd = false;
 
-        let gINPUT_ID = "001";
         // 0:パス入力、1:パスワード照合、2:ログイン完了
         let gINIT_FLG = 0;
 
+        // 入力ユーザ名
+        let gINPUT_USER = "";
+
+        // 現ユーザ名
         let gUSER_NAME = "";
+
+        // 現在のディレクトリ
+        let gCUR_DIR = "home";
+
+        // モード（モードごとにディレクトリ階層を分けるため）
+        // N:通常、H:ハッキング
+        let gMODE = "N";
+
+        // 通報残り時間(秒)
+        let gREPORT_TIME = 30;
+
+        // 今日日付（カウントダウン用）
+        let gDate = new Date();
+
+        // カウントダウンタイマー用オブジェクト
+        let gINTERVAL = null;
+
+        // コマンドヒストリオブジェクト（モードごとに配列を持つ）
+        let HIS_CMD_ARR = {};
+
+        // ヒストリ位置
+        let HIS_CNT = 0;
+
+        // 自分のグローバルIP（なんちゃって）
+        let gMY_IP = "";
+
+        // クリア条件ファイル（ユーザの成績は自動設定）
+        let CLEAR_FILE1 = "";
+        let CLEAR_FILE2 = "access.log";
+
+        // クリアフラグ1
+        let isScoreDel = false;
+        // クリアフラグ2
+        let isLogDel = false;
+
+        // メッセージ（コマンドなし）
+        let MSG_NO_CMD = "command not found";
+        // メッセージ（コマンド違反）
+        let MSG_NG_CMD = "Bad command";
+        // メッセージ（時間チート）
+        let MSG_TIME_HACK = "Congratulation! Successful time cheat!";
 
         // 初期表示文字
         let gINIT_MSG_ARR = [
-            "　　　★★★★★　　★★　　★★★★★★　　　",
-            "　　★★　　　★　　★★　　★　　　　★★　　",
-            "　★★　　　　　　　★★　　★　　　　　★★　",
-            "　★　　　　　　　　★★　　★　　　　　　★　",
-            "　★　　　　　　　　★★　　★　　　　　　★　",
-            "　★　　　　　　　　★★　　★　　　　　　★　",
-            "　★★　　　　　　　★★　　★　　　　　★★　",
-            "　　★★　　　★　　★★　　★　　　　★★　　",
-            "　　　★★★★　　　★　　　★★★★★★　　　",
+            "　　　■■■■　　　■■　　■■■■■■　　　",
+            "　　■■　　　■　　■■　　■　　　　■■　　",
+            "　■■　　　　　　　■■　　■　　　　　■■　",
+            "　■　　　　　　　　■■　　■　　　　　　■　",
+            "　■　　　　　　　　■■　　■　　　　　　■　",
+            "　■　　　　　　　　■■　　■　　　　　　■　",
+            "　■■　　　　　　　■■　　■　　　　　■■　",
+            "　　■■　　　■　　■■　　■　　　　■■　　",
+            "　　　■■■■　　　■■　　■■■■■■　　　",
             "Welcome to Hack experience...",
             "Please input USER name and PASSWORD.",
             "USER:"
         ];
 
+        // ハッキングメッセージ
+        let gHACK_MSG_ARR = [
+            "Scanning For 183.90.235.4",
+            "Connection Established ::",
+            "Connected To CHUO Institute of Information and Design Server@183.90.235.4"
+        ];
 
-        /*
-         * キーボード入力受付
+        // ゲームオーバーメッセージ
+        let gGAMEOVER_MSG_ARR = [
+            "　　■■■■■　　　　■　　　　■■　　　　■■　　■■■■■　",
+            "　■■　　　　■　　　■　　　　■■　　　　■■　　■　　　　　",
+            "　■　　　　　　　　■　■　　　■■■　　■　■　　■　　　　　",
+            "　■　　　　　　　　■　■　　　■　■　　■　■　　■■■■■　",
+            "　■　　　■■■　■　　　■　　■　■　　■　■　　■　　　　　",
+            "　■　　　　　■　■■■■■　　■　　■■　　■　　■　　　　　",
+            "　■■　　　■■　■　　　■　　■　　■■　　■　　■　　　　　",
+            "　　■■■■■　■　　　　　■　■　　　　　　■　　■■■■■　",
+            "　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　",
+            "　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　",
+            "　　　■■■　　　■　　　　　■　■■■■■　　■■■■　　　　",
+            "　　■　　　■　　　■　　　■　　■　　　　　　■　　　■　　　",
+            "　■　　　　　■　　■　　　■　　■　　　　　　■　　　■　　　",
+            "　■　　　　　■　　■　　　■　　■■■■■　　■　　　■　　　",
+            "　■　　　　　■　　　■　■　　　■　　　　　　■■■■　　　　",
+            "　■　　　　　■　　　■　■　　　■　　　　　　■　　■■　　　",
+            "　　■　　　■　　　　　■　　　　■　　　　　　■　　　■　　　",
+            "　　　■■■　　　　　　■　　　　■■■■■　　■　　　　■　　"
+        ];
+
+        // ログ残りゲームオーバー
+        let gNOCLEAR_LOG_MSG_ARR = [
+            "-----------------------------------",
+            "ログ（証跡）が残っており、",
+            "通報されてしまった…！",
+            "-----------------------------------"
+        ];
+
+        // ミッション失敗
+        let gNOCLEAR_SCORE_MSG_ARR = [
+            "-----------------------------------",
+            "自分の成績を消していなかったため、",
+            "納得のいかない成績となってしまった！",
+            "-----------------------------------"
+        ];
+
+        // タイムオーバー
+        let gNOCLEAR_TIME_MSG_ARR = [
+            "-----------------------------------",
+            "タイムオーバーで",
+            "通報されてしまった…！",
+            "-----------------------------------"
+        ];
+
+        // ゲームクリアメッセージ
+        let gGAMECLEAR_MSG_ARR = [
+            "クリアおめでとう！",
+            "ハッキング体験は楽しかったかな？",
+            "実際に行ってしまうと不正アクセス禁止法により、",
+            "厳重に処罰されてしまいます。",
+            "しっかりと理解して良いPCライフを送りましょう！"
+        ];
+
+        // ディレクトリ構造MAP
+        let gHACK_DIR_MAP = {
+            "N": {
+                "home": {
+                    "dir": true,
+                    "next": ["welcome.txt"],
+                    "value": null,
+                    "path": null
+                },
+                "welcome.txt": {
+                    "dir": false,
+                    "next": null,
+                    "value": ["オープンキャンパスへようこそ！"],
+                    "path": null
+                },
+            },
+
+            "H": {
+                "~": {
+                    "dir": true,
+                    "next": ["score", "log"],
+                    "value": null,
+                    "path": null
+                },
+                "score": {
+                    "dir": true,
+                    "next": [], // 自動設定
+                    "value": null,
+                    "path": "~"
+                },
+                "log": {
+                    "dir": true,
+                    "next": ["access.log"],
+                    "value": null,
+                    "path": "~"
+                },
+                // スコアサンプル（自動設定）
+                "test.txt": {
+                    "dir": false,
+                    "next": null,
+                    "value": ["国語：50点", "数学：45点", "英語：30点", "社会：60点", "理科：55点"],
+                    "path": null
+                },
+                "access.log": {
+                    "dir": false,
+                    "next": null,
+                    "value": [],  // 随時更新
+                    "path": null
+                }
+            }
+        };
+
+        // スコアランダム設定用（ユーザのスコアはユーザ名で作成）※もし同じ名前があってもユーザ側で上書きするのでOK
+        let gRAM_USER_SCORE_NAME = ["uchiike", "uchiyama", "shiroishi", "alice", "kano", "akaishi", "hara"];
+
+        /**
+         * キー押下処理イベント
+         * 
+         * @param {Event} e 入力イベント
          */
-        function keypress_event(e) {
+        function keydown_event(e) {
+            // Enter
             if (e.keyCode == 13) {
                 execCode();
-
+                document.getElementById("cmd").value = "";
                 return;
+
+            } else if (e.keyCode == 38) {
+                // 上矢印
+                setHistory(true);
+
+            } else if (e.keyCode == 40) {
+                // 下矢印
+                setHistory(false);
             }
 
             return false;
         }
 
-        /*
+        /**
          * 初期化処理
-         *
+         * 
          */
         function init() {
-            // 適当に文字を流す
+            // 初期メッセージ
             gTARGET_ARR = gINIT_MSG_ARR;
-            showMessage(true);
+            showMessage(true, 5);
+            // コマンドヒストリ
+            HIS_CMD_ARR["N"] = [];
+            HIS_CMD_ARR["H"] = [];
+
+            gMY_IP = getGlobalIp();
         }
 
-        // メッセージ表示（true:文字単位、false:行単位）
-        function showMessage(aFlg) {
+        /**
+         * メッセージ表示処理
+         * 
+         * @param {boolean} aFlg true:文字単位、false:行単位
+         * @param {int} aTime 表示待ち時間
+         */
+        function showMessage(aFlg, aTime) {
             isTransaction = true;
             isCmd = true;
-            let time = 5;
+            let time = aTime;
             // 文字単位表示
             if (aFlg == true) {
-                document.getElementById(gINPUT_ID).value += gTARGET_ARR[gARR_CNT].charAt(gCHAR_CNT);
+                setText(gTARGET_ARR[gARR_CNT].charAt(gCHAR_CNT), false);
                 gCHAR_CNT++;
 
                 if (gTARGET_ARR[gARR_CNT].length < gCHAR_CNT) {
+                    setText("", true);
                     gARR_CNT++;
                     gCHAR_CNT = 0;
-                    nextInput("text");
                 }
 
                 // 行単位表示
             } else {
-                time = 50;
-                document.getElementById(gINPUT_ID).value += gTARGET_ARR[gARR_CNT];
+                setText(gTARGET_ARR[gARR_CNT], true);
                 gARR_CNT++;
-                nextInput("text");
             }
 
             if (gTARGET_ARR.length > gARR_CNT) {
-                setTimeout(function () { showMessage(aFlg) }, time);
+                setTimeout(function () { showMessage(aFlg, aTime) }, time);
             } else {
                 gARR_CNT = 0;
                 gCHAR_CNT = 0;
@@ -152,43 +351,63 @@
             }
         }
 
-        // 次の行へ
-        function nextInput(aType) {
-            // 前の行は入力できなくする
-            document.getElementById(gINPUT_ID).readOnly = true;
-
-            let inputId = parseInt(gINPUT_ID);
-            gINPUT_ID = "00" + ++inputId;
-            gINPUT_ID = gINPUT_ID.slice(-3);
-
-            // ユーザ名
-            let div = null;
-            if (gINIT_FLG >= 1 && isCmd == false) {
-                div = document.createElement("div");
-                div.className = "div_txt";
-                div.innerHTML = gUSER_NAME + "@cid>";
+        /**
+         * コマンド結果表示処理
+         * 
+         * @param {String} aValue 表示文字
+         * @param {boolean} aNewLineFlg 改行有無（true:改行あり、false:改行なし）
+         */
+        function setText(aValue, aNewLineFlg) {
+            let textArea = document.getElementById("ret_area");
+            let newLine = "";
+            if (aNewLineFlg == true) {
+                newLine = "\n";
             }
+            textArea.value += aValue + newLine;
 
-            // 入力エリア
-            let inTxt = document.createElement("input");
-            inTxt.type = aType;
-            inTxt.className = "input_txt";
-            inTxt.id = gINPUT_ID;
-            inTxt.maxlength = 100;
-            if (div != null) {
-                div.appendChild(inTxt);
-                document.getElementById("cmd").appendChild(div);
+            document.getElementById("cmd").focus();
+            textArea.scrollTo(0, textArea.scrollHeight);
+        }
+
+        /**
+         * ログイン情報設定処理
+         * 
+         * @param {String} aUser ユーザ名
+         * @param {String} aDir ディレクトリ名
+         */
+        function setUserName(aUser, aDir) {
+            gUSER_NAME = aUser;
+            gCUR_DIR = aDir;
+            document.getElementById("user_name").innerHTML = aUser + "@" + aDir + ">";
+        }
+
+        // ヒストリ処理(true:↑、false：↓)
+        function setHistory(aFlg) {
+            if (aFlg == true) {
+                HIS_CNT--;
             } else {
-                document.getElementById("cmd").appendChild(inTxt);
+                if (HIS_CNT < HIS_CMD_ARR[gMODE].length) {
+                    HIS_CNT++;
+                }
             }
 
-            setTimeout(setFocus, 100);
+            // 0未満、length以上は処理をしない
+            if (HIS_CNT < 0 || HIS_CNT > HIS_CMD_ARR[gMODE].length) {
+                return;
+            }
+
+            // コマンド表示
+            if (HIS_CMD_ARR[gMODE].length == HIS_CNT) {
+                document.getElementById("cmd").value = "";
+            } else {
+                document.getElementById("cmd").value = HIS_CMD_ARR[gMODE][HIS_CNT];
+            }
         }
 
-        function setFocus() {
-            document.getElementById(gINPUT_ID).focus();
-        }
-
+        /**
+         * 入力コマンド実行処理
+         * 
+         */
         function execCode() {
             if (isTransaction == true) {
                 return;
@@ -196,85 +415,447 @@
 
             // 初期イベント中
             if (gINIT_FLG == 0) {
-                if (document.getElementById(gINPUT_ID).value == "") {
-                    nextInput("text");
-                    setMessage("Please input USER!");
-                    nextInput("text");
-                    setMessage("USER:");
-                    nextInput("text");
+                if (document.getElementById("cmd").value == "") {
+                    setText("Please input USER!", true);
+                    setText("USER:", true);
                     return;
                 }
 
-                gUSER_NAME = document.getElementById(gINPUT_ID).value;
+                if (document.getElementById("cmd").value.length > 15) {
+                    setText("UserName is too long.", true);
+                    setText("Please enter less than 15 characters.", true);
+                    setText("USER:", true);
+                    return;
+                }
 
-                nextInput("text");
-                setMessage("PASS:");
-                nextInput("password");
+                gINPUT_USER = document.getElementById("cmd").value;
+                setText(gINPUT_USER, true);
+                setText("PASS:", true);
+                // パスワードモードに変更1
+                document.getElementById("cmd").type = "password";
                 gINIT_FLG++;
 
                 return;
             } else if (gINIT_FLG == 1) {
                 // 特にパスワードをチェックしない
-                nextInput("text");
+                setText("●●●●●●●●●●", true);
+                document.getElementById("cmd").type = "text";
+                setUserName(gINPUT_USER, gCUR_DIR);
+                setText("Welcome! " + gINPUT_USER, true);
                 gINIT_FLG++;
+
+                // クリアファイル設定
+                CLEAR_FILE1 = gINPUT_USER + ".txt";
+                // ユーザ名を追加
+                gRAM_USER_SCORE_NAME.push(gINPUT_USER);
+                // 成績をランダム作成
+                setRamScore();
+
                 return;
             }
 
             isCmd = true;
-            // コマンド処理
-            switch (document.getElementById(gINPUT_ID).value) {
-                case "hack":
-                    gTARGET_ARR = HACK_MSG;
-                    showMessage(true);
-                    break;
+            // 入力コマンドを表示
+            let user = document.getElementById("user_name").innerHTML;
+            let cmd = document.getElementById("cmd").value;
+            setText(user.replace(/&gt;/g, '>') + cmd, true);
 
-                case "mat":
-                    nextInput("text");
-                    let ramNumArr = [];
-                    for (let i = 0; i < 200; i++) {
-                        let ran = "";
-                        for (let j = 0; j < 100; j++) {
-                            ran += Math.floor(Math.random() * 2);
-                        }
-                        ramNumArr.push(ran);
-                    }
+            // コマンド配列化
+            let cmdArr = cmd.split(" ");
 
-                    gTARGET_ARR = ramNumArr;
-                    showMessage(false);
-                    break;
-
-                case "ls2":
-                    nextInput("text");
-                    gTARGET_ARR = ["dir score/","dir log/","dir time/"];
-                    showMessage(false);
-                    break;
-
-                case "rm score.txt":
-                case "rm *":
-                    break;
-
-
-
-                default:
-                    if (document.getElementById(gINPUT_ID).value != "") {
-                        nextInput("text");
-                        setMessage("command not found");
-                    }
+            if (document.getElementById("cmd").value != "") {
+                HIS_CMD_ARR[gMODE].push(document.getElementById("cmd").value);
+                HIS_CNT = HIS_CMD_ARR[gMODE].length;
             }
+
+            // コマンド処理(モードごとに設定)
+            if (gMODE == "N") {
+                switch (cmdArr[0]) {
+                    // ハッキング実施
+                    case "hack":
+                        if (cmdArr[1] == "on" && cmdArr[2] == "cid") {
+                            gTARGET_ARR = gHACK_MSG_ARR;
+                            showMessage(false, 1000);
+
+                            // 通報残り時間設定
+                            document.getElementById("timer").style.visibility = "visible";
+                            gDate = new Date();
+                            gDate.setSeconds(gDate.getSeconds() + gREPORT_TIME);
+                            gINTERVAL = setInterval(countdown, 1);
+                            setUserName("183.90.235.4", "~");
+
+                            // モード変更
+                            gMODE = "H";
+
+                            addAccessLog("Login system");
+                        } else {
+                            setText(MSG_NO_CMD, true);
+                        }
+
+                        break;
+
+                    case "mat":
+                        let ramNumArr = [];
+                        for (let i = 0; i < 200; i++) {
+                            let ran = "";
+                            for (let j = 0; j < 100; j++) {
+                                ran += Math.floor(Math.random() * 2);
+                            }
+                            ramNumArr.push(ran);
+                        }
+
+                        gTARGET_ARR = ramNumArr;
+                        showMessage(false, 100);
+                        break;
+
+                    case "ll":
+                    case "la":
+                    case "ls":
+                        // ディレクトリ表示
+                        showDir();
+                        break;
+
+                    case "cd":
+                        nextDir(cmdArr[1]);
+                        break;
+
+                    case "time":
+                        if (cmdArr[1] == "hack") {
+                            if (isNaN(parseInt(cmdArr[2], 10)) == false) {
+                                setText(MSG_TIME_HACK, true);
+                                gDate.setSeconds(gDate.getSeconds() + parseInt(cmdArr[2], 10));
+                            } else {
+                                setText(MSG_NG_CMD, true);
+                            }
+                        } else {
+                            setText(new Date(), true);
+                        }
+
+                        break;
+
+                    case "cat":
+                        showFile(cmdArr[1]);
+                        break;
+
+                    case "rm":
+                        removeFile(cmdArr[1]);
+                        break;
+
+                    default:
+                        if (document.getElementById("cmd").value != "") {
+                            setText(MSG_NO_CMD, true);
+                        }
+                }
+            } else if (gMODE == "H") {
+                switch (cmdArr[0]) {
+                    // ハッキング実施
+                    case "hack":
+                        if (cmdArr[1] == "off") {
+                            // クリア判定
+                            if (isScoreDel == true && isLogDel == true) {
+                                clear();
+                            } else if (isScoreDel == true && isLogDel == false) {
+                                gameover(gNOCLEAR_LOG_MSG_ARR);
+                            } else {
+                                gameover(gNOCLEAR_SCORE_MSG_ARR);
+                            }
+
+                            setUserName(gINPUT_USER, "home");
+
+                            // モード変更
+                            gMODE = "N";
+
+                        } else {
+                            setText(MSG_NO_CMD, true);
+                        }
+
+                        break;
+
+                    case "ll":
+                    case "la":
+                    case "ls":
+                        // ディレクトリ表示
+                        showDir();
+                        break;
+
+                    case "cd":
+                        nextDir(cmdArr[1]);
+                        break;
+
+                    case "time":
+                        if (cmdArr[1] == "hack") {
+                            if (isNaN(parseInt(cmdArr[2], 10)) == false) {
+                                setText(MSG_TIME_HACK, true);
+                                gDate.setSeconds(gDate.getSeconds() + parseInt(cmdArr[2], 10));
+                            } else {
+                                setText(MSG_NG_CMD, true);
+                            }
+                        } else {
+                            setText(new Date(), true);
+                        }
+
+                        break;
+
+                    case "cat":
+                        showFile(cmdArr[1]);
+                        break;
+
+                    case "rm":
+                        removeFile(cmdArr[1]);
+                        break;
+
+                    default:
+                        if (document.getElementById("cmd").value != "") {
+                            setText(MSG_NO_CMD, true);
+                        }
+                }
+                // アクセスログに追記
+                addAccessLog(document.getElementById("cmd").value);
+            }
+
             isCmd = false;
-            nextInput("text");
         }
 
-        function setMessage(aValue) {
-            document.getElementById(gINPUT_ID).value = aValue;
+        /**
+         * カウントダウンタイマ処理
+         * 
+         */
+        const countdown = () => {
+            const now = new Date();
+            const target = gDate;
+            const differ = target.getTime() - now.getTime();
+
+            const ms = Math.floor(differ);
+            const sec = Math.floor(differ / 1000 % 60);
+            const min = Math.floor(differ / 1000 / 60 % 60);
+            const hour = Math.floor(differ / 1000 / 60 / 60 % 24);
+            const day = Math.floor(differ / 1000 / 60 / 60 / 24);
+
+            if (differ <= 0) {
+                // ゲームオーバー
+                gameover(gNOCLEAR_TIME_MSG_ARR);
+                return;
+            }
+
+            // 30秒以下は赤表示
+            if (differ <= 30000) {
+                document.getElementById("timer").style.color = "red";
+                document.getElementById("timer").style.fontWeight = "bold";
+            } else {
+                document.getElementById("timer").style.color = "white";
+                document.getElementById("timer").style.fontWeight = "normal";
+            }
+
+            let day_str = String(day).padStart(2, "0") + "日";
+            let hour_str = String(hour).padStart(2, "0") + "時間";
+            let min_str = String(min).padStart(2, "0") + "分";
+            let sec_str = String(sec).padStart(2, "0") + "秒";
+            let ms_str = String(ms).slice(-3, -1);
+
+            // 日、時間は0の場合は非表示
+            if (day == 0) {
+                day_str = "";
+            }
+            if (hour == 0) {
+                hour_str = "";
+            }
+            document.getElementById("rep_msg").innerHTML = "通報まで " +
+                day_str +
+                hour_str +
+                min_str +
+                sec_str +
+                ms_str;
+        }
+
+        /**
+         * ファイル表示処理
+         * 
+         * @param {String} aFileName ファイル名
+         */
+        function showFile(aFileName) {
+            let dir = gHACK_DIR_MAP[gMODE][gCUR_DIR]["dir"];
+            let next = gHACK_DIR_MAP[gMODE][gCUR_DIR]["next"];
+            let val = gHACK_DIR_MAP[gMODE][aFileName]["value"];
+
+            // 対象がディレクトリまたはnextがnullの場合
+            if (gHACK_DIR_MAP[gMODE][aFileName] == null || next == null ||
+                next.length == 0 || gHACK_DIR_MAP[gMODE][aFileName]["dir"] == true) {
+                // エラー
+                setText(MSG_NG_CMD, true);
+                return;
+            }
+
+            for (let i = 0; i < next.length; i++) {
+                if (next[i] == aFileName) {
+                    for (let j = 0; j < val.length; j++) {
+                        setText(val[j], true);
+                    }
+                }
+            }
+        }
+
+        // ファイル削除
+        function removeFile(aFileName) {
+            let dir = gHACK_DIR_MAP[gMODE][gCUR_DIR]["dir"];
+            let next = gHACK_DIR_MAP[gMODE][gCUR_DIR]["next"];
+            let val = gHACK_DIR_MAP[gMODE][aFileName]["value"];
+
+            // 対象がディレクトリまたはnextがnullの場合
+            if (gHACK_DIR_MAP[gMODE][aFileName] == null ||
+                next == null || gHACK_DIR_MAP[gMODE][aFileName]["dir"] == true) {
+                // エラー
+                setText(MSG_NG_CMD, true);
+                return;
+            }
+
+            for (let i = 0; i < next.length; i++) {
+                if (next[i] == aFileName) {
+                    gHACK_DIR_MAP[gMODE][gCUR_DIR]["next"].splice(i, 1);
+                    setText("File deleted successfully", true);
+
+                    // クリア条件1
+                    if (CLEAR_FILE1 == aFileName) {
+                        isScoreDel = true;
+                    }
+                    // クリア条件2
+                    if (CLEAR_FILE2 == aFileName) {
+                        isLogDel = true;
+                    }
+                }
+            }
+        }
+
+        // ディレクトリ表示
+        function showDir() {
+            let next = gHACK_DIR_MAP[gMODE][gCUR_DIR]["next"];
+            // 次がない場合は何もしない
+            if (next == null) {
+                return;
+            }
+            for (let i = 0; i < next.length; i++) {
+                let dir = "/";
+
+                if (gHACK_DIR_MAP[gMODE][next[i]]["dir"] == false) {
+                    dir = "";
+                }
+                setText(dir + next[i], true);
+            }
+        }
+
+        // ディレクトリ移動
+        function nextDir(aNextDir) {
+            let dir = gHACK_DIR_MAP[gMODE][gCUR_DIR]["dir"];
+            let next = gHACK_DIR_MAP[gMODE][gCUR_DIR]["next"];
+            let val = gHACK_DIR_MAP[gMODE][gCUR_DIR]["value"];
+            let path = gHACK_DIR_MAP[gMODE][gCUR_DIR]["path"];
+            let moveFlg = false;
+
+            // 上の階層に戻る
+            if (aNextDir == "../" && path != null) {
+                setUserName(gUSER_NAME, path);
+                return;
+            }
+
+            if (aNextDir == null) {
+                aNextDir = "";
+            }
+
+            // スラッシュは判定しない
+            aNextDir = aNextDir.replace("/", "");
+
+            // 移動先があるか判定
+            for (let i = 0; i < next.length; i++) {
+                // ディレクトリの場合のみ許可
+                if (next[i] == aNextDir) {
+                    if (gHACK_DIR_MAP[gMODE][aNextDir]["dir"] == true) {
+                        gCUR_DIR = aNextDir;
+                        moveFlg = true;
+                    } else {
+                        // エラー
+                        setText(MSG_NG_CMD, true);
+                        return;
+                    }
+                }
+            }
+            // 移動に成功していない場合
+            if (moveFlg == false) {
+                setText(MSG_NG_CMD, true);
+                return;
+            }
+
+            setUserName(gUSER_NAME, aNextDir);
+        }
+
+        // アクセスログ追加
+        function addAccessLog(aCmd) {
+            let date = new Date();
+            let year = date.getFullYear().toString();
+            let month = ("00" + (date.getMonth() + 1)).slice(-2);
+            let day = ("00" + date.getDate()).slice(-2);
+            let hh = ("00" + date.getHours()).slice(-2);
+            let mm = ("00" + date.getMinutes()).slice(-2);
+            let ss = ("00" + date.getSeconds()).slice(-2);
+            let ms = ("000" + date.getMilliseconds()).slice(-3);
+
+            let fDate = year + "/" + month + "/" + day + " " + hh + ":" + mm + ":" + ss + "." + ms;
+            gHACK_DIR_MAP[gMODE][CLEAR_FILE2]["value"].push("@" + gMY_IP + " [" + fDate + "] " + aCmd);
+        }
+
+        // グローバルIP設定
+        function getGlobalIp() {
+            let ip1 = Math.floor(Math.random() * 254) + 1;
+            let ip2 = Math.floor(Math.random() * 254) + 1;
+            let ip3 = Math.floor(Math.random() * 254) + 1;
+            let ip4 = Math.floor(Math.random() * 254) + 1;
+
+            return ip1 + "." + ip2 + "." + ip3 + "." + ip4;
+        }
+
+        // ランダムスコア設定
+        function setRamScore() {
+            for (let i = 0; i < gRAM_USER_SCORE_NAME.length; i++) {
+                let name = gRAM_USER_SCORE_NAME[i] + ".txt";
+                gHACK_DIR_MAP["H"][name] = {};
+                gHACK_DIR_MAP["H"][name]["dir"] = false;
+                gHACK_DIR_MAP["H"][name]["next"] = null;
+                gHACK_DIR_MAP["H"][name]["value"] = [];
+                gHACK_DIR_MAP["H"][name]["value"].push("国語：" + Math.floor(Math.random() * 101));
+                gHACK_DIR_MAP["H"][name]["value"].push("数学：" + Math.floor(Math.random() * 101));
+                gHACK_DIR_MAP["H"][name]["value"].push("英語：" + Math.floor(Math.random() * 101));
+                gHACK_DIR_MAP["H"][name]["value"].push("社会：" + Math.floor(Math.random() * 101));
+                gHACK_DIR_MAP["H"][name]["value"].push("理科：" + Math.floor(Math.random() * 101));
+                gHACK_DIR_MAP["H"][name]["path"] = null;
+
+                gHACK_DIR_MAP["H"]["score"]["next"].push(name);
+            }
+        }
+
+        // クリア処理
+        function clear() {
+            clearInterval(gINTERVAL);
+            gTARGET_ARR = gGAMECLEAR_MSG_ARR;
+            showMessage(true, 100);
+        }
+
+        // ゲームオーバー処理
+        function gameover(aArr) {
+            document.getElementById("timer").style.color = "red";
+            document.getElementById("rep_msg").innerHTML = "不正アクセス検知";
+            document.getElementById("cmd").disabled = true;
+            clearInterval(gINTERVAL);
+            gTARGET_ARR = aArr.concat(gGAMEOVER_MSG_ARR);
+            showMessage(true, 5);
         }
     </script>
 </head>
 
 <body onload="init()">
-    <div id="cmd">
-        <input id="001" class="input_txt" type="text">
+    <textarea id="ret_area" class="txt_font" readonly="true"></textarea>
+    <footer>
+        <span id="user_name" class="txt_font"></span><input id="cmd" class="txt_font" type="text" maxlength="70">
+    </footer>
+    <div id="timer">
+        <span id="rep_msg"></span>
     </div>
 </body>
-
 </html>
